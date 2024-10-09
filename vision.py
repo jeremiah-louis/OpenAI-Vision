@@ -46,7 +46,7 @@ response = client.chat.completions.create(
             "content": [
                 {
                     "type": "text",
-                    "text": "What are in these images? and what is the major summary about them?",
+                    "text": "What are large language models? Make use of only the content of the images as context if theres no reference to the question in the images reply with you dont know",
                 },
                 *[
                     {
