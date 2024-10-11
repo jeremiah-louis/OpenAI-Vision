@@ -48,13 +48,12 @@ response = client.chat.completions.create(
                     "type": "text",
                     "text": "What are large language models? Make use of only the content of the images as context if theres no reference to the question in the images reply with you dont know",
                 },
-                *[
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": url},
-                    }
-                    for url in urls
-                ],
+                # Generates a list of dictionaries where each dictionary contains an 'image_url' key.
+                # The value of 'image_url' is a dictionary with the 'url' key and its corresponding value from the 'urls' list.
+                # When unpacked ('*' operator) (e.g., iterating over the list), each dictionary will look like:
+                # {"type": "image_url", "image_url": {"url": "url1"}}
+                # {"type": "image_url", "image_url": {"url": "url2"}}
+                *[{"type": "image_url", "image_url": {"url": url}} for url in urls],
             ],
         }
     ],
