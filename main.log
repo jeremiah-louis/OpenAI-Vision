@@ -1,0 +1,6 @@
+DEBUG:2024-10-13 17:22:53,309:Starting new HTTPS connection (1): api.cloudinary.com:443
+DEBUG:2024-10-13 17:42:13,337:Starting new HTTPS connection (1): api.cloudinary.com:443
+DEBUG:2024-10-13 17:43:26,112:https://api.cloudinary.com:443 "POST /v1_1/dxcb59rb3/raw/upload HTTP/11" 200 None
+DEBUG:2024-10-13 17:46:41,757:Starting new HTTPS connection (1): api.cloudinary.com:443
+DEBUG:2024-10-13 17:46:49,826:https://api.cloudinary.com:443 "POST /v1_1/dxcb59rb3/raw/upload HTTP/11" 200 None
+DEBUG:2024-10-13 17:46:49,829:pptx
