@@ -12,7 +12,12 @@ cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
 api_key = os.getenv("CLOUDINARY_API_KEY")
 api_secret = os.getenv("CLOUDINARY_API_SECRET")
 
-
+# Logging configuration
+logging.basicConfig(
+    level=logging.DEBUG,
+    filename="image_converters.log",
+    format="%(levelname)s:%(asctime)s:%(message)s",
+)
 # Configuration
 cloudinary.config(
     cloud_name=cloud_name,
