@@ -1,11 +1,17 @@
 # import module
-from pdf2image import convert_from_path
+from pdf2image import convert_from_bytes
 import logging
 import os
+import requests
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
 from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from PIL import Image
+import time
 
 load_dotenv()
 cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
@@ -31,24 +37,18 @@ class FileToImageConverters:
 
     def __init__(
         self,
-        pptx_input_path: str,
-        pptx_output_path: str,
         pdf_directory: str,
         pdf_image_storage_dir: str,
-        pptx_image_storage_dir: str,
     ) -> None:
-        self.pptx_input_path = pptx_input_path
-        self.pptx_output_path = pptx_output_path
         self.pdf_directory = pdf_directory
         self.pdf_image_storage_dir = pdf_image_storage_dir
-        self.pptx_image_storage_dir = pptx_image_storage_dir
 
     def upload_static_file_to_cloudinary(self, file_name: str):
         """
         Uploads a single file stored in a temporary directory to cloudinary, and deletes the folder from the local machine after.
-        Static files include pdfs,pptx,docx
+        Static files include pdfs
         """
-        static_file_directory: str = os.path.join(self.pptx_input_path, file_name)
+        static_file_directory: str = os.path.join(self.pdf_directory, file_name)
         if os.path.exists(static_file_directory):
             try:
                 resource_url = cloudinary.uploader.upload(
@@ -58,32 +58,35 @@ class FileToImageConverters:
             except Exception as e:
                 print(e)
             else:
-                os.remove(os.path.join(self.pptx_input_path, file_name))
+                # os.remove(os.path.join(self.pdf_directory, file_name))
                 return resource_url["url"]
 
     # Store Pdf with convert_from_path function
-    def pdf_to_image(self, pdf_filename: str) -> None:
+    def pdf_to_image(self, resource_url) -> None:
         """Converts pdf files into images"""
-        pdf_file_path: str = os.path.join(self.pdf_directory, pdf_filename)
-        images = convert_from_path(pdf_file_path)
+        # Download the pdf file
+        response = requests.get(resource_url)
+        # Get the content of the pdf as bytes
+        pdf_bytes = response.content
+        # Convert bytes to images
+        images = convert_from_bytes(pdf_bytes)
         for i, image in enumerate(images):
             # Storage Path
             pdf_storage_path = os.path.join(
                 self.pdf_image_storage_dir, f"page{str(i)}.jpg"
             )
-            # Save pages as images in the pdf
+            # Save pages as images
             image.save(pdf_storage_path, "JPEG")
 
-    # def pptx_to_image(self, pptx_filename: str) -> None:
-    #     # First we convert the pptx to pdfs (Ideally these would be temporary paths since we are using s3)
-    #     input_file_path = os.path.join(self.pptx_input_path, pptx_filename)
-    #     convert(input_path=input_file_path, output_folder_path=self.pptx_output_path)
-    #     # We convert the pdf to images
-    #     images = convert_from_path(self.pptx_output_path)
-    #     for i, image in enumerate(images):
-    #         # Save pages as images in the pdf
-    #         file_path = os.path.join(self.pptx_image_storage_dir, f"page{str(i+1)}.jpg")
-    #         image.save(file_path, "JPEG")
+    def url_to_image(self, url_img_path: str):
+        firefox_options = webdriver.FirefoxOptions()
+        firefox_options.add_argument("--headless")
+        driver = webdriver.Firefox(options=firefox_options)
+        driver.maximize_window()
+        driver.get("https://en.wikipedia.org/wiki/The_World%27s_Billionaires")
+        time.sleep(3)
+        driver.save_full_page_screenshot(url_img_path)
+        driver.quit()
 
     def doc_to_image(self):
         pass
@@ -114,3 +117,9 @@ class FileToImageConverters:
                     )
                     urls.append(upload_result["secure_url"])
         return urls
+
+    def store_list_in_chroma_db(self, urls: list[str]) -> None:
+        # Take the urls list from cloudinary and then store the urls in a chroma database with key value pair "id":[...list of urls]
+        # After that we would then feed these urls to the openai vision models and the id would be what we would use to identify them
+        #
+        pass
