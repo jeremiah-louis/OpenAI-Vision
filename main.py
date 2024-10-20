@@ -1,7 +1,8 @@
 from urllib.parse import urlparse
-from image_converters import FileToImageConverters
+from converters.image_converters import FileToImageConverters
 import logging
-import os
+from handlers.redis_db_handler import RedisHandler
+from handlers.vision_handler import OpenAi_llm
 
 # Logging Configurations
 logging.basicConfig(
@@ -10,25 +11,22 @@ logging.basicConfig(
     format="%(levelname)s:%(asctime)s:%(message)s",
 )
 
-# A function that accepts the data in form of "doc/docx", "pptx", "pdf", "websites".
-# Uploads and stores the static assets on the cloud
-# Uses the cloud storage version ("url") to feed the chat completions api
-image_converter = FileToImageConverters(
-    pptx_input_path="powerpoints",
-    pptx_output_path="pptx_to_pdfs",
-    pdf_directory="pdfs",
-    pptx_image_storage_dir="pptx_images",
-    pdf_image_storage_dir="pdf_images",
-)
-resource_url = image_converter.upload_static_file_to_cloudinary(
-    file_name="Sample PPTX.pptx"
-)
+
+def get_image_converter_and_redis_handler():
+    image_converter = FileToImageConverters(
+        pdf_directory="pdfs",
+        pdf_image_storage_dir="pdf_images",
+    )
+    redis_handler = RedisHandler()
+    openai_llm = OpenAi_llm()
+    return image_converter, redis_handler, openai_llm
 
 
 def get_file_extension_type(static_file_url) -> str:
     """Gets a url and extracts the file extension type from it."""
-    # clean up url to expose the file name
+    # Parse the URL into its components (scheme, netloc, path, etc.) to allow easier extraction of the file path.
     parsed_static_file_url = urlparse(static_file_url)
+    # Extract the file path component from the parsed URL.
     file_path = parsed_static_file_url.path
     if "." in file_path:
         # Gets the file extension type e.g pdf,jpg,pptx e.t.c
@@ -40,9 +38,8 @@ def get_file_extension_type(static_file_url) -> str:
         return file_extension_type
 
 
-def handle_various_static_file_types(static_file_url: str) -> None:
+def handle_various_static_file_types(static_file_url) -> None:
     file_extension = get_file_extension_type(static_file_url)
-
     # Execute the various functions based on file extension
     if file_extension == "pdf":
         handle_pdfs()
@@ -57,20 +54,27 @@ def handle_various_static_file_types(static_file_url: str) -> None:
 
 
 def handle_pdfs():
-    pass
+    # Unpacks the image_converter, redis_handler, and openai_llm objects
+    image_converter, redis_handler, openai_llm = get_image_converter_and_redis_handler()
+    # Creates a url from the resource uploaded
+    resource_url = image_converter.upload_static_file_to_cloudinary("")
+    # Generates a unique_id to be used as a key to identify image urls
+    document_id = redis_handler.generate_unique_uuid(user_id="jerry")
+    # Converts the pdf resource to images
+    image_converter.pdf_to_image(resource_url=resource_url)
+    # Uploads the images from loccal directory to cloudinary
+    urls = image_converter.upload_images_to_cloudinary()
+    # Stores the Cloudinary PDF-image URLs inside a redis db
+    redis_handler.store_list_in_redis(urls=urls, document_id=document_id)
+    # Retrieves the Cloudinary PDF-image URLs from the redis db
+    vision_urls = redis_handler.retrieve_list_from_redis(document_id=document_id)
+    # Uploads the urls to the vision model
+    openai_llm.parse_url_to_vision_model(urls=vision_urls)
 
 
 def handle_presentations():
     pass
-    # # Converts the pptx files to images
-    # pptx_to_img = image_converter.pptx_to_image(pptx_filename="Sample PPTX.pptx")
-    # # Stores the images in cloudinary
-    # img_urls = image_converter.upload_images_to_cloudinary()
-    # print(img_urls)
 
 
 def handle_word_documents():
     pass
-
-
-logging.debug(get_file_extension_type(static_file_url=resource_url))

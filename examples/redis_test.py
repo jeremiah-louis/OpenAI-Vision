@@ -1,14 +1,9 @@
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
+import redis
+import uuid
+import json
 
-# llm_config
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
-
-from openai import OpenAI
-
+r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+user_id: str = "jerry"
 urls = [
     "https://res.cloudinary.com/dxcb59rb3/image/upload/v1728467323/page21.jpg",
     "https://res.cloudinary.com/dxcb59rb3/image/upload/v1728467326/page20.jpg",
@@ -37,26 +32,11 @@ urls = [
     "https://res.cloudinary.com/dxcb59rb3/image/upload/v1728467370/page2.jpg",
     "https://res.cloudinary.com/dxcb59rb3/image/upload/v1728467372/page10.jpg",
 ]
-client = OpenAI()
-response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "What are large language models? Make use of only the content of the images as context if theres no reference to the question in the images reply with you dont know",
-                },
-                # Generates a list of dictionaries where each dictionary contains an 'image_url' key.
-                # The value of 'image_url' is a dictionary with the 'url' key and its corresponding value from the 'urls' list.
-                # When unpacked ('*' operator) (e.g., iterating over the list), each dictionary will look like:
-                # {"type": "image_url", "image_url": {"url": "url1"}}
-                # {"type": "image_url", "image_url": {"url": "url2"}}
-                *[{"type": "image_url", "image_url": {"url": url}} for url in urls],
-            ],
-        }
-    ],
-    max_tokens=300,
-)
-print(response.choices[0].message.content)
+list_string = " ".join(urls)
+document_id = f"{user_id}_{uuid.uuid4()}"
+r.set(document_id, list_string)
+urls_redis = r.get(document_id)
+print(type(urls_redis))
+
+
+print(str(urls_redis).split())

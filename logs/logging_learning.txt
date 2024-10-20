@@ -1,0 +1,6 @@
+The various logging levels 
+DEBUG: The debug level contains detailed information typically of interest when diagnosing problems.
+INFO: The info level assures us that things are working as they should/as expected
+WARNING: An indication that something unexpected happened, or indicative of some problem that'll occour in the near future. (e.g Space is low). Though the software stil works as expected. 
+ERROR: Due to a more serious problem, the software has not been able to perform some function.
+CRITICAL: A serious error, indicating that the program itself maybe unable to continue running. 

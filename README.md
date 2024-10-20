@@ -1,2 +1,4 @@
-## Document Analyser using OpenAI Vision Capabilities ##
-![image](https://github.com/user-attachments/assets/8dcd4b40-6988-45f0-9141-21451ab52102)
+## Document Analyser using OpenAI Vision 
+
+![image](https://github.com/user-attachments/assets/7c7e88e2-3b2d-43d8-a525-96a0942064bc)
+

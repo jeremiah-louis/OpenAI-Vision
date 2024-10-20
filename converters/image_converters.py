@@ -10,7 +10,6 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from PIL import Image
 import time
 
 load_dotenv()
@@ -34,7 +33,6 @@ cloudinary.config(
 
 
 class FileToImageConverters:
-
     def __init__(
         self,
         pdf_directory: str,
@@ -79,6 +77,7 @@ class FileToImageConverters:
             image.save(pdf_storage_path, "JPEG")
 
     def url_to_image(self, url_img_path: str):
+        # didnt fully implement this feature.
         firefox_options = webdriver.FirefoxOptions()
         firefox_options.add_argument("--headless")
         driver = webdriver.Firefox(options=firefox_options)
@@ -94,12 +93,6 @@ class FileToImageConverters:
     def upload_images_to_cloudinary(self):
         """
         Uploads all `.jpg` images from the "pdf_images" directory to Cloudinary and returns their URLs.
-
-        This function iterates through the "pdf_images" folder, selects all files with the `.jpg` extension,
-        and uploads each image to Cloudinary using its filename (without the extension) as the `public_id`.
-        The `public_id` ensures that each image has a unique identifier in Cloudinary, preventing overwriting
-        of files. Each image is opened in binary mode (`"rb"`) to handle the file correctly during the upload.
-
         The function returns a list of secure URLs for the uploaded images.
 
         Returns:
@@ -109,6 +102,7 @@ class FileToImageConverters:
         for image in Path(self.pdf_image_storage_dir).iterdir():
             if image.suffix == ".jpg":
                 with open(image, "rb") as img:
+                    # Extract the file name without the extension e.g ('spider.jpg' -> 'spider')
                     public_id = image.stem
                     # Upload multiple images from directory
                     upload_result = cloudinary.uploader.upload(
@@ -117,9 +111,3 @@ class FileToImageConverters:
                     )
                     urls.append(upload_result["secure_url"])
         return urls
-
-    def store_list_in_chroma_db(self, urls: list[str]) -> None:
-        # Take the urls list from cloudinary and then store the urls in a chroma database with key value pair "id":[...list of urls]
-        # After that we would then feed these urls to the openai vision models and the id would be what we would use to identify them
-        #
-        pass
